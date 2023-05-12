@@ -32,17 +32,28 @@ stop_flag=False
 time_line = time.time()
 time_stop = time.time()
 #обьявляем массивы hsv для оранжевого голубого и черного
-lowor = np.array([6, 110, 64])
+
+lowor = np.array([7, 110, 64])
 upor = np.array([21, 255, 255])
-lowblue = np.array([82, 63, 0])
+# lowor = np.array([8, 0, 0])
+# upor = np.array([33, 255, 255])
+
+# lowblue = np.array([82, 63, 0])
+# upblue = np.array([180, 255, 255])
+lowblue = np.array([105, 73, 0])
 upblue = np.array([180, 255, 255])
-lowblack= np.array([20, 25, 0])
-upblack = np.array([73, 255, 28])
+
+lowblack= np.array([0, 95, 0])
+# upblack = np.array([180, 255, 30])
+upblack = np.array([180, 255, 23])
+
+# lowblack= np.array([0, 0, 1])
+# upblack = np.array([63, 255, 60])
 #Функция отвечает за нахождение черных контуров на левом датчике
 def dlz(frame):
      global dl
      #обьявлям область интереса
-     dblz = frame[250:370, 0:150]
+     dblz = frame[250:370, 0:200]
      hsv = cv2.cvtColor(dblz, cv2.COLOR_BGR2HSV)
      mask_black = cv2.inRange(hsv, lowblack, upblack)
      imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_black, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -52,43 +63,46 @@ def dlz(frame):
           x, y, w, h = cv2.boundingRect(contorb1)
           a1 = cv2.contourArea(contorb1)
           #выделяем самый большой контур
-          if x + w > x1 + w1 and a1>100:
+          if x + w > x1 + w1 and a1>400:
                x1, w1, y1, h1 = x, w, y, h
      dl = x1 + w1
      #обводка по контуру самого большого контура
      cv2.rectangle(dblz, (x1, y1), (x1 + w1, y1 + h1), (0, 255, 0), 2)
      #отображение левого датчика
-     cv2.rectangle(frame, (0, 250), (150, 370), (255, 0, 0), 2)
+     cv2.rectangle(frame, (0, 250), (200, 370), (255, 0, 0), 2)
+
 #Функция отвечает за нахождение черных контуров на правом датчике
 def drz(frame):
      global dr
      # обьявлям область интереса
-     drlz  = frame[250:370, 490:640]
+     drlz  = frame[250:370, 460:660]
      hsv = cv2.cvtColor(drlz, cv2.COLOR_BGR2HSV)
      mask_black = cv2.inRange(hsv, lowblack, upblack)
      imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_black, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-     x1, y1, h1, w1 = 150, 0, 0, 0
+     x1, y1, h1, w1 = 180, 0, 0, 0
      # находим черные контуры
      for contorb1 in contoursd1:
           x, y, w, h = cv2.boundingRect(contorb1)
           a1 = cv2.contourArea(contorb1)
           # выделяем самый большой контур
-          if 150-x > 150-x1 and a1 > 100:
+          if 200-x > 200-x1 and a1 > 400:
                x1, w1, y1, h1 = x, w, y, h
-     dr = 150-x1
+     dr = 180-x1
      # обводка по контуру самого большого контура
      cv2.rectangle(drlz, (x1, y1), (x1 + w1, y1 + h1), (0, 255, 0), 2)
      # отображение правого датчика
-     cv2.rectangle(frame, (490, 250), (640, 370), (255, 0, 0), 2)
+     cv2.rectangle(frame, (460, 250), (660, 370), (255, 0, 0), 2)
+
 #Функция отвечает за движене робота на основе регулятора
 def p():
      global dr, dl, servo, eold, direct
      #находим ошибку
      e = dl-dr
      #обьявляем коэффициент
-     k = 0.1
+     kp = 0.15
+     kd = 0.15
      #используем формулу пд регулятора
-     servo = k*e + 0.1*(e - eold)
+     servo = kp*e + kd*(e - eold)
      #записываем старую ошибку
      eold=e
      #предохраниние от резких поворотов
@@ -98,15 +112,16 @@ def p():
           servo=-50
      #если датчики не видят черныхконтуров
      if dl==0:
-          servo=-20
+          servo=-15
      if dr==0:
-          servo=20
+          servo=15
      #находим направение нашего робота
      if dr == 0 and dl == 0:
           if direct == "blue":
-               servo = -20
+               servo = -15
           if direct == "orange":
-               servo = 20
+               servo = 15
+
 #Функция отвечает за остановку робота и за счет кругов
 def dlin(frame):
      global lowor, upor, line,upblue,lowblue, line_orange, line_blue, direct, circle, time_line, stop, stop_flag, stop_time, index
@@ -199,6 +214,7 @@ def dlin(frame):
                     time_line = time.time()
      #обводим область интереса
      cv2.rectangle(frame, (295, 410), (345, 430), (0, 0, 0), 2)
+
 #цикл проигрывает наши функции
 while True:
      #запускаем функции
