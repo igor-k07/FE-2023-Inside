@@ -398,11 +398,14 @@ while True:
 
      # условие если скорость робота больше 0
      if speed>0:
+          # Если не увидели знак, то едем по обычному регулятору
           if colorz == 'None':
                p()
+          # Если увидели красный знак, то едем по функции объезда красного знака
           elif colorz=='red':
                time_data = time.time()
                pdzr()
+          # Если увидели кзеленый знак, то едем по функции объезда зеленого знака
           elif colorz == 'green':
                time_data = time.time()
                pdzg()
@@ -410,7 +413,7 @@ while True:
      else:
           # p()
           servo=0
-
+     # ограничения на поворот
      if servo > 50:
           servo = 50
      if servo < -50:
@@ -419,7 +422,9 @@ while True:
      # servo = 0
      # отправляем сообщения на пайборд для того что бы включились моторы
      message = str(int(speed) + 200) + str(int(servo) + 200) + rgb + '$'
+     # выводим телемитрию
      telemetria(frame)
+     # обрисовываем область интереса правого и левого датчика черного
      cv2.rectangle(frame, (490, 250), (640, 310), (255, 0, 0), 2)
      cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
      port.write(message.encode('utf-8'))
