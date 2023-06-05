@@ -33,22 +33,19 @@ time_line = time.time()
 time_stop = time.time()
 #обьявляем массивы hsv для оранжевого голубого и черного
 
-lowor = np.array([7, 110, 64])
-upor = np.array([21, 255, 255])
-# lowor = np.array([8, 0, 0])
-# upor = np.array([33, 255, 255])
+# lowor = np.array([7, 110, 64])
+# upor = np.array([21, 255, 255])
+lowor = np.array([7, 113, 140])
+upor = np.array([28, 255, 255])
 
 # lowblue = np.array([82, 63, 0])
 # upblue = np.array([180, 255, 255])
-lowblue = np.array([105, 73, 0])
+lowblue = np.array([105, 98, 0])
 upblue = np.array([180, 255, 255])
 
-lowblack= np.array([0, 95, 0])
+lowblack= np.array([0, 0, 0])
 # upblack = np.array([180, 255, 30])
-upblack = np.array([180, 255, 23])
-
-# lowblack= np.array([0, 0, 1])
-# upblack = np.array([63, 255, 60])
+upblack = np.array([180, 255, 25])
 #Функция отвечает за нахождение черных контуров на левом датчике
 def dlz(frame):
      global dl
@@ -99,7 +96,7 @@ def p():
      #находим ошибку
      e = dl-dr
      #обьявляем коэффициент
-     kp = 0.15
+     kp = 0.18
      kd = 0.15
      #используем формулу пд регулятора
      servo = kp*e + kd*(e - eold)
@@ -112,15 +109,18 @@ def p():
           servo=-50
      #если датчики не видят черныхконтуров
      if dl==0:
-          servo=-15
+          servo=-30
      if dr==0:
-          servo=15
+          if direct == "orange":
+               servo=18
+          else:
+               servo=20
      #находим направение нашего робота
      if dr == 0 and dl == 0:
           if direct == "blue":
-               servo = -15
+               servo = -20
           if direct == "orange":
-               servo = 15
+               servo = 20
 
 #Функция отвечает за остановку робота и за счет кругов
 def dlin(frame):
@@ -254,9 +254,9 @@ while True:
      #проверка нажата кнопка или нет
      if btn == '0' and btntime+1 < time.time():
           btntime = time.time()
-          #устанавлеваем скорость в 80 если кнопка нажата
+          #устанавлеваем скорость в 60 если кнопка нажата
           if speed==0:
-               speed=80
+               speed=60
           else:
                speed=0
      #обновление экрана
