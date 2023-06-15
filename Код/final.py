@@ -15,6 +15,7 @@ fps1 = 0
 fps_time = 0
 btntime = time.time()
 znaktime = time.time()
+t_t=time.time()
 dl=0
 dr=0
 xz=0
@@ -44,8 +45,8 @@ stop_time=0
 stop = [0,0,0,0]
 index=1
 stop_flag=False
-dlm = [0] * 10
-drm = [0] * 10
+dlm = [0] * 20
+drm = [0] * 20
 
 time_line = time.time()
 time_stop = time.time()
@@ -88,11 +89,15 @@ def telemetria(frame):
      cv2.putText(frame, str("l=") + str(dl), (480, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      cv2.putText(frame, str("r=") + str(dr), (480, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      cv2.putText(frame, str("line=") + str(direct), (480, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+     cv2.rectangle(frame, (640, 250), (640 - 9 * (dr - 1), 310), (255, 255, 255), -1)
+     cv2.rectangle(frame, (460, 250), (640, 310), (255, 0, 0), 2)
+     cv2.rectangle(frame, (0, 250), (0 + 9 * (dl - 1), 310), (255, 0, 0), 2)
+     cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
 
 # функция, которая отвечает за нахождение контуров знаков (красных и зеленых)
 def datz(frame):
      #объявляем глобальные переменные
-     global lowr,upr,lowg,upg,colorz, xz,yz, hz, wz, znaktime, color1
+     global lowr,upr,lowg,upg,colorz, xz,yz, hz, wz, znaktime, color1, cube_time, cube_color
      # задаем область интереса для нашего датчика
      # dz=frame[190:380, 100:540]
      dz = frame[190:380, 100:540]
@@ -176,87 +181,78 @@ def datz(frame):
                     xz, yz, wz, hz =  x_g, y_g, w_g, h_g
                     if yz + hz > 50:
                          color1 = colorz
-
+     if yz + hz > 150:
+          cube_time = time.time()
+          cube_color = colorz
      # Отрисовываем рамку, в области которой работает наш датчик
      cv2.rectangle(frame, (100, 190), (540, 380), (0, 0, 0), 2)
 
 #Функция отвечает за нахождение черных контуров на левом датчике
-
 def dlz(frame):
-     global dl
+    global dl, dlm
+    for i in range(0, 180, 9):
+        dblz = frame[250:310, i:(i + 9)]
+        hsv = cv2.cvtColor(dblz, cv2.COLOR_BGR2HSV)
+        mask_black = cv2.inRange(hsv, lowblack, upblack)
+        mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
+        mask_black = cv2.bitwise_and(mask_black, mask_blue)
+        imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_black, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        x1, y1, h1, w1 = 0, 0, 0, 0
+        # находим черные контуры
+        dlm[i//9] = 0
+        for contorb1 in contoursd1:
+            x, y, w, h = cv2.boundingRect(contorb1)
+            a1 = cv2.contourArea(contorb1)
+            # выделяем самый большой контур
+            if x + w > x1 + w1 and a1 > 100 and h > 40:
+                x1, w1, y1, h1 = x, w, y, h
+                dlm[i // 9] = 1
+                cv2.rectangle(frame, (i, 250), ((i + 9), 310), (255, 255, 255), -1)
 
-     # обьявлям область интереса
-     # dblz = frame[250:310, 0:180]
-     # hsv = cv2.cvtColor(dblz, cv2.COLOR_BGR2HSV)
-     # mask_black = cv2.inRange(hsv, lowblack, upblack)
-     # mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
-     # mask_black = cv2.bitwise_and(mask_black, mask_blue)
-     # imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_black, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-     # x1, y1, h1, w1 = 0, 0, 0, 0
-     # # находим черные контуры#находим черные контуры
-     # for contorb1 in contoursd1:
-     #      x, y, w, h = cv2.boundingRect(contorb1)
-     #      a1 = cv2.contourArea(contorb1)
-     #      # выделяем самый большой контур
-     #      if x + w > x1 + w1 and a1>100 and h>40:
-     #           x1, w1, y1, h1 = x, w, y, h
-     # # frame[250:310, 0:180] =  cv2.cvtColor(mask_blue, cv2.COLOR_GRAY2BGR)
-     # dl = x1 + w1
-     # cv2.rectangle(dblz, (x1, y1), (x1 + w1, y1 + h1), (255, 255, 255), 5)
-     for i in range(18, 198, 18):
-          dblz = frame[250:310, i:(i + 18)]
-          hsv = cv2.cvtColor(dblz, cv2.COLOR_BGR2HSV)
+    dl = 0
+    for i in range(20):
+         if dlm[19 - i] == 1:
+              dl = 20 - i
+              break
+
+#Функция отвечает за нахождение черных контуров на правом датчике
+def drz(frame):
+     global dr, drm
+     for i in range(0, -180, -9):
+          dbrz = frame[250:310, 640+i-9:640+i]
+          hsv = cv2.cvtColor(dbrz, cv2.COLOR_BGR2HSV)
           mask_black = cv2.inRange(hsv, lowblack, upblack)
           mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
           mask_black = cv2.bitwise_and(mask_black, mask_blue)
           imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_black, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           x1, y1, h1, w1 = 0, 0, 0, 0
           # находим черные контуры#находим черные контуры
+          drm[((180 + i) // 9) - 1] = 0
           for contorb1 in contoursd1:
                x, y, w, h = cv2.boundingRect(contorb1)
                a1 = cv2.contourArea(contorb1)
                # выделяем самый большой контур
-               if x + w > x1 + w1 and a1>100 and h>40:
+               if x + w > x1 + w1 and a1 > 100 and h > 40:
                     x1, w1, y1, h1 = x, w, y, h
-                    dlm[i // 18 - 1] = 1
-               else:
-                    dlm[i // 18 - 1] = 0
+                    drm[((180 + i) // 9) - 1] = 1
+                    cv2.rectangle(frame, ((640+i-9), 250), ((640+i), 310), (255, 255, 255), -1)
 
-
-
-
-
-#Функция отвечает за нахождение черных контуров на правом датчике
-def drz(frame):
-     global dr
-     # обьявлям область интереса
-     drlz  = frame[250:310, 460:640]
-     hsv = cv2.cvtColor(drlz, cv2.COLOR_BGR2HSV)
-     mask_black = cv2.inRange(hsv, lowblack, upblack)
-     mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
-     mask_black = cv2.bitwise_and(mask_black,mask_blue)
-     imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_black, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-     x1, y1, h1, w1 = 180, 0, 0, 0
-     # находим черные контуры
-     for contorb1 in contoursd1:
-          x, y, w, h = cv2.boundingRect(contorb1)
-          a1 = cv2.contourArea(contorb1)
-          # выделяем самый большой контур
-          if 180-x > 180-x1 and a1 > 100 and a1/h*w>0.3 and h>40:
-               x1, w1, y1, h1 = x, w, y, h
-
-     dr = 180-x1
-     # frame[250:310, 460:640] = cv2.cvtColor(mask_blue, cv2.COLOR_GRAY2BGR)
-     cv2.rectangle(drlz, (x1, y1), (x1 + w1, y1 + h1), (255, 255, 255), 5)
+     dr = 0
+     for i in range(20):
+          if drm[i] == 1:
+               dr = 20 - i
+               break
 
 #Функция отвечает за движене робота на основе регулятора
 def p():
      global dr, dl, servo, eold, direct
      #находим ошибку
      e = dl-dr
+     if -1 <= e <= 1:
+          e = 0
      #обьявляем коэффициент
-     kp = 0.3
-     kd = 0.15
+     kp = 2.5
+     kd = 0.2
      #используем формулу пд регулятора
      servo = kp*e + kd*(e - eold)
      #записываем старую ошибку
@@ -314,7 +310,7 @@ def pdzg():
 
 #Функция отвечает за остановку робота и за счет кругов
 def dlin(frame):
-     global lowor, upor, line,upblue,lowblue, line_orange, line_blue, direct, circle, time_line, stop, stop_flag, stop_time, index
+     global lowor, upor, line,upblue,lowblue, line_orange, line_blue, direct, circle, time_line, stop, stop_flag, stop_time, index, cube_time, last_cube_time
      line = 'None'
      # условие если оранжевые или голубые контуры не найдены, находим направление движения нашего робота
      if direct == "None":
@@ -348,6 +344,8 @@ def dlin(frame):
           if direct != "None":
                circle += 1
                time_line = time.time()
+               last_cube_time = time_line-cube_time
+
      # если контуры уже найдены и известно направление робота
      else:
           # если первым контуром попался голубой
@@ -405,59 +403,11 @@ def dlin(frame):
                     if index == 4:
                          index = 0
                     time_line = time.time()
-
      # обводим область интереса
      cv2.rectangle(frame, (295, 410), (345, 430), (0, 0, 0), 2)
 
-#цикл проигрывает наши функции
-while True:
-
-     fps1 += 1
-     if time.time() > fps_time + 1:
-          fps_time = time.time()
-          fps = fps1
-          fps1 = 0
-     # запускаем функции
-     frame = robot.get_frame(wait_new_frame=1)
-     cv2.rectangle(frame, (0, 0), (640, 80), (0, 0, 0), -1)
-     dlin(frame)
-     dlz(frame)
-     drz(frame)
-     # datz(frame)
-     # условие проверки кол-во кругов
-     if circle == 12:
-          # остановка если круги достигли 12
-          if time.time()>time_stop+stop[0]*0.6:
-               speed=0
-     else:
-          time_stop = time.time()
-
-     # условие если скорость робота больше 0
-     if speed>0:
-          # Если не увидели знак, то едем по обычному регулятору
-          if colorz == 'None':
-               p()
-          # Если увидели красный знак, то едем по функции объезда красного знака
-          elif colorz=='red':
-               time_data = time.time()
-               pdzr()
-          # Если увидели кзеленый знак, то едем по функции объезда зеленого знака
-          elif colorz == 'green':
-               time_data = time.time()
-               pdzg()
-     # иначе серво не двигается
-     else:
-          # p()
-          servo=0
-     # ограничения на поворот
-     if servo > 50:
-          servo = 50
-     if servo < -50:
-          servo = -50
-
-     if circle == 4:
-          speed = 0
-
+def razvorot():
+     global flag_povorot, state, speed, servo, direct
      if  circle > 3 and flag_povorot == False:
           if state == 0:
                speed = 0
@@ -483,14 +433,67 @@ while True:
                     state = 4
                     speed = 60
 
+#цикл проигрывает наши функции
+while True:
+
+     fps1 += 1
+     if time.time() > fps_time + 1:
+          fps_time = time.time()
+          fps = fps1
+          fps1 = 0
+     # запускаем функции
+     frame = robot.get_frame(wait_new_frame=1)
+     cv2.rectangle(frame, (0, 0), (640, 80), (0, 0, 0), -1)
+     dlin(frame)
+     dlz(frame)
+     drz(frame)
+     datz(frame)
+     # условие проверки кол-во кругов
+     if circle == 12:
+          # остановка если круги достигли 12
+          if time.time()>time_stop+stop[0]*0.6:
+               speed=0
+     else:
+          time_stop = time.time()
+
+     # условие если скорость робота больше 0
+     if speed>0:
+          # Если не увидели знак, то едем по обычному регулятору
+          if colorz == 'None':
+               p()
+          # Если увидели красный знак, то едем по функции объезда красного знака
+          elif colorz=='red':
+               time_data = time.time()
+               pdzr()
+
+
+          # Если увидели кзеленый знак, то едем по функции объезда зеленого знака
+          elif colorz == 'green':
+               time_data = time.time()
+               pdzg()
+     # иначе серво не двигается
+     else:
+          servo=0
+     # ограничения на поворот
+     if servo > 50:
+          servo = 50
+     if servo < -50:
+          servo = -50
+
+     # if circle == 4:
+     #      speed = 0
+
+     # razvorot()
+
 
      # отправляем сообщения на пайборд для того что бы включились моторы
      message = str(int(speed) + 200) + str(int(servo) + 200) + rgb + '$'
      # выводим телемитрию
      telemetria(frame)
      # обрисовываем область интереса правого и левого датчика черного
-     cv2.rectangle(frame, (460, 250), (640, 310), (255, 0, 0), 2)
-     cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
+     # cv2.rectangle(frame, (460, 250), (640, 310), (255, 0, 0), 2)
+     # cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
+
      port.write(message.encode('utf-8'))
      if port.in_waiting > 0:
           t = time.time()
