@@ -538,14 +538,14 @@ def razvorot():
      global flag_povorot, state, speed, servo, direct, time_state, circle
      p = 1
      flag_povorot = True
-     if direct == 'orange':
-          p = -1
 
      if state == 0:
           speed = 0
           time_state = time.time()
           state = 1
      if direct == 'orange' or (direct == 'blue' and last_cube_time < 1):
+          if direct == 'orange':
+               p = -1
           if state == 1:
                servo = 45 * p
                speed = 30
@@ -573,6 +573,35 @@ def razvorot():
                     circle += 1
                     state = 4
                     speed = 60
+     else:
+          if state == 1:
+               servo = -45
+               speed = 30
+               if time_state + 1.8 < time.time():
+                    state = 2
+                    time_state = time.time()
+          if state == 2:
+               servo = 50
+               speed = -30
+               if time_state + 0.7 < time.time():
+                    state = 3
+                    speed = 0
+                    time_state = time.time()
+          if state == 3:
+               if last_cube_time < 1:
+                    speed = -30
+               else:
+                    speed = 30
+               if time_state + 1 < time.time():
+                    flag_povorot = False
+                    if p == 1:
+                         direct = 'orange'
+                    else:
+                         direct = 'blue'
+                    circle += 1
+                    state = 4
+                    speed = 60
+          
 
 #цикл проигрывает наши функции
 while True:
