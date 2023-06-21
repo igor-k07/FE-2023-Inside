@@ -125,7 +125,7 @@ def datz(frame):
      # Ищем зеленый цвет
      maskg = cv2.inRange(hsv, lowg, upg)
      # Находим контуры зеленого
-     imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(maskg,(3,3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+     contoursd1, hod1 = cv2.findContours(cv2.blur(maskg,(3,3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
      w_g = 0
      h_g = 0
      x_g = 0
@@ -142,7 +142,7 @@ def datz(frame):
      #Ищем красный цвет
      maskr = cv2.inRange(hsv, lowr, upr)
      # Находим контуры красногго
-     imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(maskr,(3,3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+     contoursd1, hod1 = cv2.findContours(cv2.blur(maskr,(3,3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
      w_r = 0
      h_r = 0
      x_r = 0
@@ -254,17 +254,16 @@ def datz(frame):
      # Отрисовываем рамку, в области которой работает наш датчик
 
 #Функция отвечает за нахождение черных контуров на левом датчике
-
 def dlz(frame):
     global dl, dlm
 
     for i in range(0, 200, 10):
-        dblz = frame[230:260, i:(i + 10)]
+        dblz = frame[230:290, i:(i + 10)]
         hsv = cv2.cvtColor(dblz, cv2.COLOR_BGR2HSV)
         mask_black1 = cv2.inRange(hsv, lowblack, upblack)
         mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
         m = cv2.bitwise_and(mask_black1, mask_blue)
-        imd1, contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         x1, y1, h1, w1 = 0, 0, 0, 0
         # находим черные контуры#находим черные контуры
         dlm[i//10] = 0
@@ -275,7 +274,7 @@ def dlz(frame):
             if x + w > x1 + w1 and a1 > 40 and h > 20:
                 x1, w1, y1, h1 = x, w, y, h
                 dlm[i // 10] = 1
-                cv2.rectangle(frame, (i, 230), ((i + 10), 260), (255, 255, 255), -1)
+                cv2.rectangle(frame, (i, 230), ((i + 10), 290), (255, 255, 255), -1)
 
     dl = 0
     for i in range(20):
@@ -286,15 +285,16 @@ def dlz(frame):
     # cv2.rectangle(frame, (0, 230), (200, 290), (255, 0, 0), 2)
 
 #Функция отвечает за нахождение черных контуров на правом датчике
+#Функция отвечает за нахождение черных контуров на правом датчике
 def drz(frame):
      global dr, drm
      for i in range(0, -200, -10):
-          dbrz = frame[230:260, 640 + i - 10:640 + i]
+          dbrz = frame[230:290, 640 + i - 10:640 + i]
           hsv = cv2.cvtColor(dbrz, cv2.COLOR_BGR2HSV)
           mask_black = cv2.inRange(hsv, lowblack, upblack)
           mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
           m = cv2.bitwise_and(mask_black, mask_blue)
-          imd1, contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           x1, y1, h1, w1 = 0, 0, 0, 0
           # находим черные контуры#находим черные контуры
           drm[((200 + i) // 10) - 1] = 0
@@ -305,7 +305,7 @@ def drz(frame):
                if x + w > x1 + w1 and a1 > 40 and h > 20:
                     x1, w1, y1, h1 = x, w, y, h
                     drm[((200 + i) // 10) - 1] = 1
-                    cv2.rectangle(frame, ((640 + i - 10), 230), ((640 + i), 260), (255, 255, 255), -1)
+                    cv2.rectangle(frame, ((640 + i - 10), 230), ((640 + i), 290), (255, 255, 255), -1)
 
      dr = 0
      for i in range(20):
@@ -363,8 +363,8 @@ def pd():
      if -1 <= e <= 1:
           e = 0
      #обьявляем коэффициент
-     kp = 1.5
-     kd = 0.5
+     kp = 3
+     kd = 0.4
      #используем формулу пд регулятора
      servo = kp*e + kd*(e - eold)
      #записываем старую ошибку
@@ -438,7 +438,7 @@ def dlin(frame):
           # накладываем серую маску на наше изображение для нахождения оранжевых контуров
           hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
           mask_orange = cv2.inRange(hsv, lowor, upor)
-          imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           # поиск оранжевых контуров
           for contorb1 in contoursd1:
                x, y, w, h = cv2.boundingRect(contorb1)
@@ -448,7 +448,7 @@ def dlin(frame):
                     direct = "orange"
           # накладываем серую маску на наше изображение для нахождения голубых контуров
           mask_blue = cv2.inRange(hsv, lowblue, upblue)
-          imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           # поиск голубых контуров
           for contorb1 in contoursd1:
                x, y, w, h = cv2.boundingRect(contorb1)
@@ -475,7 +475,7 @@ def dlin(frame):
                linz = frame[380:420, 295:345]
                hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
                mask_blue = cv2.inRange(hsv, lowblue, upblue)
-               imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE,
+               contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE,
                                                          cv2.CHAIN_APPROX_NONE)
                # поиск контуров
                for contorb1 in contoursd1:
@@ -507,7 +507,7 @@ def dlin(frame):
                linz = frame[380:420, 295:345]
                hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
                mask_orange = cv2.inRange(hsv, lowor, upor)
-               imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE,
+               contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE,
                                                          cv2.CHAIN_APPROX_NONE)
                # находим оранжевые контуры
                for contorb1 in contoursd1:
@@ -664,9 +664,9 @@ while True:
      cv2.rectangle(frame, (120, 190), (520, 350), (0, 0, 0), 2)
      # обновление экрана
      # cv2.rectangle(frame, (640, 230), (640 - 10 * (dr - 1), 290), (255, 255, 255), -1)
-     cv2.rectangle(frame, (440, 230), (640, 260), (255, 0, 0), 2)
+     cv2.rectangle(frame, (440, 230), (640, 290), (255, 0, 0), 2)
      # cv2.rectangle(frame, (0, 230), (0 + 10 * (dl - 1), 290), (255, 255, 255), -1)
-     cv2.rectangle(frame, (0, 230), (200, 260), (255, 0, 0), 2)
+     cv2.rectangle(frame, (0, 230), (200, 290), (255, 0, 0), 2)
      cv2.rectangle(frame, (295, 380), (345, 420), (0, 0, 0), 2)
      robot.set_frame(frame,40)
 
