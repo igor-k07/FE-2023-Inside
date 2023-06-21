@@ -123,12 +123,12 @@ def dlz(frame):
     global dl, dlm
 
     for i in range(0, 200, 10):
-        dblz = frame[230:260, i:(i + 10)]
+        dblz = frame[230:290, i:(i + 10)]
         hsv = cv2.cvtColor(dblz, cv2.COLOR_BGR2HSV)
         mask_black1 = cv2.inRange(hsv, lowblack, upblack)
         mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
         m = cv2.bitwise_and(mask_black1, mask_blue)
-        imd1, contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         x1, y1, h1, w1 = 0, 0, 0, 0
         # находим черные контуры#находим черные контуры
         dlm[i//10] = 0
@@ -139,7 +139,7 @@ def dlz(frame):
             if x + w > x1 + w1 and a1 > 40 and h > 20:
                 x1, w1, y1, h1 = x, w, y, h
                 dlm[i // 10] = 1
-                # cv2.rectangle(frame, (i, 230), ((i + 10), 260), (255, 255, 255), -1)
+                cv2.rectangle(frame, (i, 230), ((i + 10), 290), (255, 255, 255), -1)
 
     dl = 0
     for i in range(20):
@@ -153,12 +153,12 @@ def dlz(frame):
 def drz(frame):
      global dr, drm
      for i in range(0, -200, -10):
-          dbrz = frame[230:260, 640 + i - 10:640 + i]
+          dbrz = frame[230:290, 640 + i - 10:640 + i]
           hsv = cv2.cvtColor(dbrz, cv2.COLOR_BGR2HSV)
           mask_black = cv2.inRange(hsv, lowblack, upblack)
           mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
           m = cv2.bitwise_and(mask_black, mask_blue)
-          imd1, contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           x1, y1, h1, w1 = 0, 0, 0, 0
           # находим черные контуры#находим черные контуры
           drm[((200 + i) // 10) - 1] = 0
@@ -169,7 +169,7 @@ def drz(frame):
                if x + w > x1 + w1 and a1 > 40 and h > 20:
                     x1, w1, y1, h1 = x, w, y, h
                     drm[((200 + i) // 10) - 1] = 1
-                    # cv2.rectangle(frame, ((640 + i - 10), 230), ((640 + i), 260), (255, 255, 255), -1)
+                    cv2.rectangle(frame, ((640 + i - 10), 230), ((640 + i), 290), (255, 255, 255), -1)
 
      dr = 0
      for i in range(20):
@@ -227,8 +227,8 @@ def pd():
      if -1 <= e <= 1:
           e = 0
      #обьявляем коэффициент
-     kp = 1.5
-     kd = 0.5
+     kp = 2
+     kd = 1
      #используем формулу пд регулятора
      servo = kp*e + kd*(e - eold)
      #записываем старую ошибку
@@ -247,6 +247,7 @@ def pd():
           servo = 25
           if direct == 'None':
                pdl()
+
      #находим направение нашего робота
      if dr == 0 and dl == 0:
           if direct == "blue":
@@ -271,7 +272,7 @@ def dlin(frame):
           # накладываем серую маску на наше изображение для нахождения оранжевых контуров
           hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
           mask_orange = cv2.inRange(hsv, lowor, upor)
-          imd1, contoursd1  = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          contoursd1, hod1  = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           # поиск оранжевых контуров
           for contorb1 in contoursd1:
                x, y, w, h = cv2.boundingRect(contorb1)
@@ -281,7 +282,7 @@ def dlin(frame):
                     direct = "orange"
           # накладываем серую маску на наше изображение для нахождения голубых контуров
           mask_blue = cv2.inRange(hsv, lowblue, upblue)
-          imd1, contoursd1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           # поиск голубых контуров
           for contorb1 in contoursd1:
                x, y, w, h = cv2.boundingRect(contorb1)
@@ -308,7 +309,7 @@ def dlin(frame):
                linz = frame[380:420, 295:345]
                hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
                mask_blue = cv2.inRange(hsv, lowblue, upblue)
-               imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE,
+               contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE,
                                                          cv2.CHAIN_APPROX_NONE)
                # поиск контуров
                for contorb1 in contoursd1:
@@ -340,7 +341,7 @@ def dlin(frame):
                linz = frame[380:420, 295:345]
                hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
                mask_orange = cv2.inRange(hsv, lowor, upor)
-               imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE,
+               contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE,
                                                          cv2.CHAIN_APPROX_NONE)
                # находим оранжевые контуры
                for contorb1 in contoursd1:
@@ -381,11 +382,9 @@ while True:
      dlin(frame)
      dlz(frame)
      drz(frame)
-     speed = 0
      # условие если скорость робота больше 0
      if speed>0:
-          # pd()
-          pass
+          pd()
      # иначе серво не двигается
      else:
           servo=0
@@ -403,8 +402,12 @@ while True:
      else:
           time_stop = time.time()
 
-
+     if direct == 'None' and speed!=0:
+          speed = 50
+     elif direct!="None" and speed != 0:
+          speed = 80
      # отправляем сообщения на пайборд для того что бы включились моторы
+
      message = str(int(speed) + 200) + str(int(servo) + 200) + rgb + '$'
      # выводим телемитрию
      telemetria(frame)
@@ -412,34 +415,34 @@ while True:
      # cv2.rectangle(frame, (460, 250), (640, 310), (255, 0, 0), 2)
      # cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
      port.write(message.encode('utf-8'))
-     # if port.in_waiting > 0:
-     #      t = time.time()
-     #      while True:
-     #           a = str(port.read(), 'utf-8')
-     #           if a != '$':
-     #                inn += a
-     #           else:
-     #                break
-     #           if t + 0.02 < time.time():
-     #                break
-     #      btn = inn
-     #      inn = ''
-     #      # port.reset_input_buffer()
-     # # проверка нажата кнопка или нет
-     # if btn == '0' and btntime+1 < time.time():
-     #      btntime = time.time()
-     #      # устанавлеваем скорость в 60 если кнопка нажата
-     #      if speed==0:
-     #           speed=60
-     #      else:
-     #           speed=0
+     if port.in_waiting > 0:
+          t = time.time()
+          while True:
+               a = str(port.read(), 'utf-8')
+               if a != '$':
+                    inn += a
+               else:
+                    break
+               if t + 0.02 < time.time():
+                    break
+          btn = inn
+          inn = ''
+          port.reset_input_buffer()
+     # проверка нажата кнопка или нет
+     if btn == '0' and btntime+1 < time.time():
+          btntime = time.time()
+          # устанавлеваем скорость в 60 если кнопка нажата
+          if speed==0:
+               speed=80
+          else:
+               speed=0
 
      # cv2.rectangle(frame, (120, 190), (520, 350), (0, 0, 0), 2)
      # обновление экрана
      # cv2.rectangle(frame, (640, 230), (640 - 10 * (dr - 1), 290), (255, 255, 255), -1)
-     cv2.rectangle(frame, (440, 230), (640, 260), (255, 0, 0), 2)
+     cv2.rectangle(frame, (440, 230), (640, 290), (255, 0, 0), 2)
      # cv2.rectangle(frame, (0, 230), (0 + 10 * (dl - 1), 290), (255, 255, 255), -1)
-     cv2.rectangle(frame, (0, 230), (200, 260), (255, 0, 0), 2)
+     cv2.rectangle(frame, (0, 230), (200, 290), (255, 0, 0), 2)
      cv2.rectangle(frame, (295, 380), (345, 420), (0, 0, 0), 2)
      robot.set_frame(frame,40)
 
