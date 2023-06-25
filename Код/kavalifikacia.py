@@ -108,8 +108,8 @@ def telemetria(frame):
      # cv2.putText(frame, str("") + str(list_cube[3]), (280, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      # cv2.putText(frame, str(pl_list), (0, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      # cv2.putText(frame, str(stop), (0, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
-     cv2.putText(frame, str("p=") + str(circle), (490, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
-     cv2.putText(frame, str("dir=") + str(direct), (490, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+     cv2.putText(frame, str("servo=") + str(circle), (490, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+     cv2.putText(frame, str("servo=") + str(servo), (490, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      cv2.putText(frame, str("fps=") + str(fps), (460, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      # cv2.putText(frame, str("c_time=") + str(last_cube_time), (460, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
 
@@ -193,11 +193,8 @@ def pdl():
      servo = kp*e + kd*(e - eold)
      #записываем старую ошибку
      eold=e
-     #предохраниние от резких поворотов
-     if servo>50:
-          servo=max_servo
-     if servo<-50:
-          servo=-max_servo
+
+
 
 def pdr():
      global dr, dl, servo, eold, direct, dlm, drm, max_servo
@@ -214,10 +211,7 @@ def pdr():
      #записываем старую ошибку
      eold=e
      #предохраниние от резких поворотов
-     if servo>50:
-          servo=max_servo
-     if servo<-50:
-          servo=-max_servo
+
 
 #Функция отвечает за движене робота на основе регулятора
 def pd():
@@ -234,17 +228,17 @@ def pd():
      #записываем старую ошибку
      eold=e
      #предохраниние от резких поворотов
-     if servo>50:
-          servo=50
-     if servo<-50:
-          servo=-50
+     if servo>60:
+          servo=60
+     if servo<-60:
+          servo=-60
      #если датчики не видят черных контуров
      if dl == 0 and dr>2:
-          servo = -25
+          servo = -30
           if direct == 'None':
                pdr()
      if dr == 0 and dl>2:
-          servo = 25
+          servo = 30
           if direct == 'None':
                pdl()
 
@@ -388,12 +382,6 @@ while True:
      # иначе серво не двигается
      else:
           servo=0
-     # ограничения на поворот
-     if servo > 50:
-          servo = 50
-     if servo < -50:
-          servo = -50
-
      # условие проверки кол-во кругов
      if circle >= 12:
           # остановка если круги достигли 12
@@ -415,20 +403,23 @@ while True:
      # cv2.rectangle(frame, (460, 250), (640, 310), (255, 0, 0), 2)
      # cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
      port.write(message.encode('utf-8'))
-     if port.in_waiting > 0:
-          t = time.time()
-          while True:
-               a = str(port.read(), 'utf-8')
-               if a != '$':
-                    inn += a
-               else:
-                    break
-               if t + 0.02 < time.time():
-                    break
-          btn = inn
-          inn = ''
-          port.reset_input_buffer()
-     # проверка нажата кнопка или нет
+     try:
+          if port.in_waiting > 0:
+               t = time.time()
+               inn = ''
+               while True:
+                    a = str(port.read(), 'utf-8')
+                    if a != '$':
+                         inn += a
+                    else:
+                         break
+                    if t + 0.02 < time.time():
+                         break
+               btn = inn
+               port.reset_input_buffer()
+          # проверка нажата кнопка или нет
+     except ValueError:
+          print('err')
      if btn == '0' and btntime+1 < time.time():
           btntime = time.time()
           # устанавлеваем скорость в 60 если кнопка нажата
