@@ -26,9 +26,11 @@ line = 'None'
 colorz = "None"
 color1 = 0
 inn = ''
-speed = 0
+
 servo = 0
 rgb = '010'
+start_message = '999999999$'
+message = ''
 btn = 1
 eold = 1
 eold1 = 1
@@ -43,7 +45,7 @@ time_state = time.time()
 stop_time = 0
 stop = [0, 0, 0, 0]
 index = 1
-stop_flag = False
+stop_flag = True
 dlm = [0] * 20
 drm = [0] * 20
 
@@ -69,16 +71,18 @@ pl_index_place = 0
 pl_index_time = 0
 pl_flag = False
 p = 1
+
+state_state = 0
 # обьявляем массивы hsv для оранжевого голубого и черного
-# lowr=np.array([0,150,50])
-# upr=np.array([5,255,255])
-lowr = np.array([0, 66, 69])
-upr = np.array([8, 255, 255])
+lowr = np.array([0, 89, 46])
+upr = np.array([11, 255, 255])
+# lowr = np.array([0, 66, 69])
+# upr = np.array([8, 255, 255])
 
 # lowg=np.array([ 66, 150,  52])
 # upg=np.array( [ 83, 255, 255])
-lowg = np.array([65, 192, 37])
-upg = np.array([89, 255, 255])
+lowg = np.array([67, 229, 52])
+upg = np.array([81, 255, 254])
 
 # lowor = np.array([7, 110, 64])
 # upor = np.array([21, 255, 255])
@@ -94,12 +98,14 @@ lowblack = np.array([0, 0, 0])
 # upblack = np.array([180, 255, 30])
 upblack = np.array([180, 255, 40])
 
+speed = 70
 
 # Функция отвечает вывод на изображение необходимых для нас переменных, за изменением которых нам нужно следить
 def telemetria(frame):
     # объявляем глобальные переменные
     global fps, xz, yz, line, dl, dr, colorz, servo, circle, dl, dr, list_cube, list_flag, last_cube_time
     # поочередно выводим на экран нужные нам значения
+
     # cv2.putText(frame, str(index_cube) + str(circle), (0,60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
     # cv2.putText(frame, str("time=") + str(round(pl_time,2)), (0, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
     # cv2.putText(frame, str("flag=") + str(pl_list[3]), (0, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
@@ -112,7 +118,8 @@ def telemetria(frame):
     cv2.putText(frame, str("fps=") + str(fps), (490, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
     # cv2.putText(frame, str("") + str(list_cube[3]), (300, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
     cv2.putText(frame, str("") + str(cube_color), (300, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
-    cv2.putText(frame, str("") + str(circle), (300, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+    cv2.putText(frame, str("servo") + str(servo), (300, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+
     cv2.putText(frame, str("direct=") + str(direct), (300, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
 
 
@@ -328,7 +335,7 @@ def pd():
         e = 0
     # обьявляем коэффициент
     kp = 3
-    kd = 0.4
+    kd = 2.5
     # используем формулу пд регулятора
     servo = kp * e + kd * (e - eold)
     # записываем старую ошибку
@@ -629,52 +636,7 @@ while True:
     # запускаем функции
     frame = robot.get_frame(wait_new_frame=1)
     cv2.rectangle(frame, (0, 0), (640, 100), (0, 0, 0), -1)
-    # Если выполняем разворот, на время отключаем все датчики
-    if flag_povorot == False:
-        dlin(frame)
-        dlz(frame)
-        drz(frame)
-        datz(frame)
-
-    # условие если скорость робота больше 0
-        if speed > 0:
-            # Если не увидели знак, то едем по обычному регулятору
-            if colorz == 'None':
-                pd()
-            # Если увидели красный знак, то едем по функции объезда красного знака
-            elif colorz == 'red':
-                time_data = time.time()
-                pdzr()
-                list_time = time.time()
-            # Если увидели кзеленый знак, то едем по функции объезда зеленого знака
-            elif colorz == 'green':
-                time_data = time.time()
-                pdzg()
-                list_time = time.time()
-        # иначе серво не двигается
-        else:
-            servo = 0
-
-    # по прохождению 8 поворотов(2 круга), запускаем функцию разворота
-    if circle == 8 and cube_color == 'red':
-        razvorot()
-
-    # условие проверки кол-во кругов
-    if circle >= 12:
-        if time.time() > time_stop + stop[0] * 0.7:
-            speed = 0
-    else:
-        time_stop = time.time()
-
-    # отправляем сообщения на пайборд для того что бы включились моторы
-    message = str(int(speed) + 200) + str(int(servo) + 200) + rgb + '$'
-    # выводим телемитрия
-    telemetria(frame)
-    # обрисовываем область интереса правого и левого датчика черного
-    # cv2.rectangle(frame, (460, 250), (640, 310), (255, 0, 0), 2)
-    # cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
-    port.write(message.encode('utf-8'))
-    if start == False:
+    if state_state == 0:
         if port.in_waiting > 0:
             try:
                 inn = ''
@@ -691,23 +653,79 @@ while True:
                 port.reset_input_buffer()
             except ValueError:
                 print("err")
-
         # проверка нажата кнопка или нет
-        if btn == '0' and btntime + 1 < time.time():
-            btntime = time.time()
+        if btn == '0':
             # устанавлеваем скорость в 60 если кнопка нажата
-            if speed == 0:
-                speed = 70
-                start=True
-            else:
-                speed = 0
+            state_state = 1
+            start = True
 
-    # cv2.rectangle(frame, (120, 190), (520, 350), (0, 0, 0), 2)
+
+
+    # Если выполняем разворот, на время отключаем все датчики
+    if state_state == 1:
+
+        if flag_povorot == False:
+            dlin(frame)
+            dlz(frame)
+            drz(frame)
+            datz(frame)
+
+        # условие если скорость робота больше 0
+            if speed > 0:
+                # Если не увидели знак, то едем по обычному регулятору
+                if colorz == 'None':
+                    pd()
+                # Если увидели красный знак, то едем по функции объезда красного знака
+                elif colorz == 'red':
+                    time_data = time.time()
+                    pdzr()
+                    list_time = time.time()
+                # Если увидели кзеленый знак, то едем по функции объезда зеленого знака
+                elif colorz == 'green':
+                    time_data = time.time()
+                    pdzg()
+                    list_time = time.time()
+            # иначе серво не двигается
+            else:
+                servo = 0
+
+    if state_state == 3:
+        speed = 0
+        servo = 0
+
+    # по прохождению 8 поворотов(2 круга), запускаем функцию разворота
+    if circle == 8 and cube_color == 'red':
+        razvorot()
+
+    # условие проверки кол-во кругов
+    if circle == 12 and stop_flag:
+        stop_flag = False
+        time_stop = time.time()
+
+    if time.time() > time_stop + stop[0] * 0.7 and not stop_flag:
+        state_state = 3
+
+    # отправляем сообщения на пайборд для того что бы включились моторы
+    # speed =1
+    if state_state != 0:
+        message = str(int(speed) + 200) + str(int(servo) + 200) + rgb + '$'
+    else:
+        message=start_message
+    port.write(message.encode('utf-8'))
+
+    # выводим телемитрия
+    telemetria(frame)
+    robot.text_to_frame(frame, state_state, 300, 40, (255, 255, 255), 1)
+    robot.text_to_frame(frame, message, 300, 20, (255, 255, 255), 1)
+    # обрисовываем область интереса правого и левого датчика черного
+    # cv2.rectangle(frame, (460, 250), (640, 310), (255, 0, 0), 2)
+    # cv2.rectangle(frame, (0, 250), (180, 310), (255, 0, 0), 2)
+    cv2.rectangle(frame, (120, 200), (520, 350), (0, 0, 0), 2)
     # # обновление экрана
-    # # cv2.rectangle(frame, (640, 230), (640 - 10 * (dr - 1), 290), (255, 255, 255), -1)
-    # cv2.rectangle(frame, (380, 230), (640, 270), (255, 0, 0), 2)
-    # # cv2.rectangle(frame, (0, 230), (0 + 10 * (dl - 1), 290), (255, 255, 255), -1)
-    # cv2.rectangle(frame, (0, 230), (260, 270), (255, 0, 0), 2)
-    # cv2.rectangle(frame, (295, 380), (345, 420), (0, 0, 0), 2)
-    # cv2.putText(frame, str("fps=") + str(fps), (460, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+    cv2.rectangle(frame, (640, 230), (640 - 10 * (dr - 1), 290), (255, 255, 255), -1)
+    cv2.rectangle(frame, (380, 230), (640, 270), (255, 0, 0), 2)
+    cv2.rectangle(frame, (0, 230), (0 + 10 * (dl - 1), 290), (255, 255, 255), -1)
+    cv2.rectangle(frame, (0, 230), (260, 270), (255, 0, 0), 2)
+    cv2.rectangle(frame, (295, 380), (345, 420), (0, 0, 0), 2)
+    cv2.putText(frame, str("fps=") + str(fps), (460, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
     robot.set_frame(frame, 40)
