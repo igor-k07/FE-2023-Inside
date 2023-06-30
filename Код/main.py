@@ -43,43 +43,55 @@ def rgb(r,g,b):
     else:
         l_b.high()
 
+def motor(sped):
+    global in_a, in_b, ch1
+    if sped > 0:
+        in_a.low()
+        in_b.high()
+        ch1.pulse_width_percent(sped)
+    else:
+        in_b.low()
+        in_a.high()
+        ch1.pulse_width_percent(abs(sped))
 
 rgb(1,1,1)
 start = False
 
 while True:
-    print(btn.value())
+    # print(btn.value())
     if uart.any():
+        # pyb.LED(3).on()
         a = chr(uart.readchar())
         if a != '$':
-            inn += a
+            inn = inn + a
             if len(inn) > 10:
                 inn = ''
         else:
             try:
                 if len(inn) == 9:
-                    if start == False:
-                        rgb(0, 0, 0)
-                        start = True
-                    speed = int(inn[0:3]) - 200
-                    serv = int(inn[3:6]) - 200 + 10
-                    r = int(inn[6])
-                    g = int(inn[7])
-                    b = int(inn[8])
-                    inn = ''
-                    # print(speed, serv, r, g, b)
-                    servo1.angle(serv)
-                    ch1.pulse_width_percent(speed)
-                    rgb(r,g,b)
-                    uart.write(str(btn.value()) + '$')
+                    # pyb.LED(4).on()
+                    # print(inn)
+                    if not start:
+                        if inn == '999999999':
+                            rgb(0, 1, 0)
+                        if btn.value() == 0:
+                            start = True
+                    else:
+                        if inn != '999999999':
+                            speed = int(inn[0:3]) - 200
+                            serv = int(inn[3:6]) - 200 + 10
+                            r = int(inn[6])
+                            g = int(inn[7])
+                            b = int(inn[8])
+                            # inn = ''
+                            # print(speed, serv, r, g, b)
+                            if serv>60:serv = 60
+                            if serv < -60: serv = -60
+                            servo1.angle(serv)
+                            motor(speed)
+                            rgb(r,g,b)
             except ValueError:
                 print('err')
-
-
-
-
-
-
-
-
+        uart.write(str(btn.value()) + '$')
+        # pyb.LED(3).off()
 
