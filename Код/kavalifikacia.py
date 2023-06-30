@@ -69,15 +69,6 @@ pl_index_place = 0
 pl_index_time = 0
 pl_flag = False
 #обьявляем массивы hsv для оранжевого голубого и черного
-# lowr=np.array([0,150,50])
-# upr=np.array([5,255,255])
-lowr=np.array([0,66,69])
-upr=np.array([8,255,255])
-
-# lowg=np.array([ 66, 150,  52])
-# upg=np.array( [ 83, 255, 255])
-lowg=np.array([ 65, 192,  37])
-upg=np.array( [ 89, 255, 255])
 
 # lowor = np.array([7, 110, 64])
 # upor = np.array([21, 255, 255])
@@ -86,7 +77,7 @@ upor = np.array([30, 255, 255])
 
 # lowblue = np.array([82, 63, 0])
 # upblue = np.array([180, 255, 255])
-lowblue = np.array([84, 63, 0])
+lowblue = np.array([88, 49, 0])
 upblue = np.array([180, 255, 255])
 
 lowblack= np.array([0, 0, 0])
@@ -108,8 +99,8 @@ def telemetria(frame):
      # cv2.putText(frame, str("") + str(list_cube[3]), (280, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      # cv2.putText(frame, str(pl_list), (0, 100), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      # cv2.putText(frame, str(stop), (0, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
-     cv2.putText(frame, str("servo=") + str(circle), (490, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
-     cv2.putText(frame, str("servo=") + str(servo), (490, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+     cv2.putText(frame, str("circle=") + str(circle), (490, 20), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
+     cv2.putText(frame, str("speed=") + str(speed), (490, 40), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      cv2.putText(frame, str("fps=") + str(fps), (460, 60), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
      # cv2.putText(frame, str("c_time=") + str(last_cube_time), (460, 80), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 255), 2)
 
@@ -128,7 +119,7 @@ def dlz(frame):
         mask_black1 = cv2.inRange(hsv, lowblack, upblack)
         mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
         m = cv2.bitwise_and(mask_black1, mask_blue)
-        contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        imd1, contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         x1, y1, h1, w1 = 0, 0, 0, 0
         # находим черные контуры#находим черные контуры
         dlm[i//10] = 0
@@ -158,7 +149,7 @@ def drz(frame):
           mask_black = cv2.inRange(hsv, lowblack, upblack)
           mask_blue = cv2.bitwise_not(cv2.inRange(hsv, lowblue, upblue))
           m = cv2.bitwise_and(mask_black, mask_blue)
-          contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          imd1, contoursd1, hod1 = cv2.findContours(m, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           x1, y1, h1, w1 = 0, 0, 0, 0
           # находим черные контуры#находим черные контуры
           drm[((200 + i) // 10) - 1] = 0
@@ -210,7 +201,6 @@ def pdr():
      servo = kp*e + kd*(e - eold)
      #записываем старую ошибку
      eold=e
-     #предохраниние от резких поворотов
 
 
 #Функция отвечает за движене робота на основе регулятора
@@ -223,6 +213,7 @@ def pd():
      #обьявляем коэффициент
      kp = 2
      kd = 1
+     # 2, 1
      #используем формулу пд регулятора
      servo = kp*e + kd*(e - eold)
      #записываем старую ошибку
@@ -266,7 +257,7 @@ def dlin(frame):
           # накладываем серую маску на наше изображение для нахождения оранжевых контуров
           hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
           mask_orange = cv2.inRange(hsv, lowor, upor)
-          contoursd1, hod1  = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          imd1, contoursd1, hod1  = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           # поиск оранжевых контуров
           for contorb1 in contoursd1:
                x, y, w, h = cv2.boundingRect(contorb1)
@@ -276,7 +267,7 @@ def dlin(frame):
                     direct = "orange"
           # накладываем серую маску на наше изображение для нахождения голубых контуров
           mask_blue = cv2.inRange(hsv, lowblue, upblue)
-          contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+          imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
           # поиск голубых контуров
           for contorb1 in contoursd1:
                x, y, w, h = cv2.boundingRect(contorb1)
@@ -303,7 +294,7 @@ def dlin(frame):
                linz = frame[380:420, 295:345]
                hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
                mask_blue = cv2.inRange(hsv, lowblue, upblue)
-               contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE,
+               imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_blue, (3, 3)), cv2.RETR_TREE,
                                                          cv2.CHAIN_APPROX_NONE)
                # поиск контуров
                for contorb1 in contoursd1:
@@ -335,7 +326,7 @@ def dlin(frame):
                linz = frame[380:420, 295:345]
                hsv = cv2.cvtColor(linz, cv2.COLOR_BGR2HSV)
                mask_orange = cv2.inRange(hsv, lowor, upor)
-               contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE,
+               imd1, contoursd1, hod1 = cv2.findContours(cv2.blur(mask_orange, (3, 3)), cv2.RETR_TREE,
                                                          cv2.CHAIN_APPROX_NONE)
                # находим оранжевые контуры
                for contorb1 in contoursd1:
